@@ -1,0 +1,56 @@
+# Development Configuration
+environment: development
+debug: true
+log_level: DEBUG
+
+# Hardware Configuration
+hardware:
+  device: cpu
+  num_workers: 4
+  pin_memory: false
+
+# Training Configuration
+training:
+  batch_size: 32
+  learning_rate: 0.001
+  epochs: 10
+  checkpoint_interval: 5
+  save_best_only: true
+
+# Model Configuration
+model:
+  hidden_size: 256
+  num_layers: 3
+  dropout: 0.3
+
+# Quantum Configuration
+quantum:
+  backend: qiskit
+  shots: 1024
+  noise_model: null
+
+# Evaluation Configuration
+evaluation:
+  metrics:
+    - accuracy
+    - consciousness_level
+    - quantum_coherence
+  save_predictions: true
+
+# Data Configuration
+data:
+  data_dir: data/raw
+  processed_dir: data/processed
+  num_workers: 4
+
+# Logging Configuration
+logging:
+  log_dir: data/logs
+  tensorboard: true
+  wandb: false
+
+# Visualization Configuration
+visualization:
+  save_plots: true
+  plot_dir: data/plots
+  interactive: true

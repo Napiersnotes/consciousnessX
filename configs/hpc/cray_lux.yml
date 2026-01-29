@@ -1,0 +1,73 @@
+# Cray LUX Supercomputer Configuration
+environment: hpc
+debug: false
+log_level: INFO
+
+# Hardware Configuration
+hardware:
+  device: gpu
+  num_workers: 64
+  pin_memory: true
+  accelerator: cray_slingshot
+  distributed: true
+
+# Training Configuration
+training:
+  batch_size: 512
+  learning_rate: 0.0001
+  epochs: 200
+  checkpoint_interval: 20
+  save_best_only: true
+  distributed_backend: nccl
+
+# Model Configuration
+model:
+  hidden_size: 1024
+  num_layers: 8
+  dropout: 0.1
+
+# Quantum Configuration
+quantum:
+  backend: qiskit
+  shots: 16384
+  noise_model: realistic
+  quantum_accelerator: cray_quantum
+
+# Evaluation Configuration
+evaluation:
+  metrics:
+    - accuracy
+    - consciousness_level
+    - quantum_coherence
+    - ethical_score
+    - scalability_metrics
+  save_predictions: true
+
+# Data Configuration
+data:
+  data_dir: /lustre/data/consciousnessx/raw
+  processed_dir: /lustre/data/consciousnessx/processed
+  num_workers: 64
+
+# Logging Configuration
+logging:
+  log_dir: /lustre/data/consciousnessx/logs
+  tensorboard: true
+  wandb: true
+
+# Visualization Configuration
+visualization:
+  save_plots: false
+  plot_dir: /lustre/data/consciousnessx/plots
+  interactive: false
+
+# Cray-Specific Configuration
+cray:
+  use_aprun: true
+  aprun_args: "-n 256 -N 4 -j 2"
+  use_alps: true
+  environment_modules:
+    - craype
+    - cray-libsci
+    - cudatoolkit
+    - cray-mpich

@@ -1,0 +1,174 @@
+# ConsciousnessX Default Configuration
+# Dafydd Napier - Quantum-Biological Consciousness Simulation
+
+project:
+  name: "ConsciousnessX"
+  version: "0.1.0"
+  author: "Dafydd Napier"
+  description: "Quantum-Biological Consciousness Simulation Framework"
+
+simulation:
+  # Orch-OR Parameters
+  num_tubulins: 1000
+  coherence_time: 1e-4  # seconds
+  gravity_strength: 1.0
+  superposition_levels: 4
+  
+  # Simulation Parameters
+  duration_seconds: 0.1
+  time_resolution: 1e-4
+  
+  # Device Configuration
+  device: "cuda"  # or "cpu"
+  
+  # Consciousness Thresholds
+  consciousness_threshold: 0.3
+  full_consciousness_threshold: 0.6
+
+virtual_bio:
+  # Virtual Neuronal Culture
+  num_neurons: 1000
+  num_electrodes: 32
+  culture_type: "hippocampal"
+  
+  # Simulation Parameters
+  duration_ms: 1000.0
+  time_step_ms: 0.01
+  
+  # Neuron Distribution
+  excitatory_ratio: 0.8
+  inhibitory_ratio: 0.15
+  modulatory_ratio: 0.05
+  
+  # Synaptic Parameters
+  connection_probability: 0.1
+  stdp_learning: true
+
+hpc:
+  # Virtual HPE CRAY Cluster
+  num_nodes: 2
+  gpus_per_node: 4
+  memory_per_gpu: 256  # GB
+  interconnect_bandwidth: 200.0  # GB/s
+  
+  # Distributed Simulation
+  num_models: 4
+  parallel_strategy: "data_parallel"
+  
+  # Model Configuration
+  model_config:
+    num_tubulins: 1000
+    coherence_time: 1e-4
+    gravity_strength: 1.0
+    superposition_levels: 4
+    batch_size: 512
+    num_epochs: 50
+    learning_rate: 1e-4
+  
+  # Simulation Parameters
+  simulation_time: 0.1
+  time_resolution: 1e-4
+
+real_time_monitoring:
+  # Real-Time Consciousness Monitoring
+  num_tubulins: 500
+  coherence_time: 1e-4
+  gravity_strength: 1.0
+  superposition_levels: 4
+  
+  # Monitoring Parameters
+  time_step: 1e-4
+  max_steps: 10000
+  
+  # Alert Thresholds
+  consciousness_threshold: 0.3
+  full_consciousness_threshold: 0.6
+  
+  # Visualization
+  update_interval_ms: 100
+  save_interval_steps: 1000
+
+output:
+  # Results Directory
+  results_dir: "results"
+  checkpoint_dir: "checkpoints"
+  logs_dir: "logs"
+  
+  # Save Options
+  save_results: true
+  save_checkpoints: true
+  save_visualizations: true
+  
+  # File Formats
+  results_format: "pkl"  # or "h5", "json"
+  checkpoint_format: "pt"
+  
+  # Compression
+  compress_results: false
+
+visualization:
+  # Dashboard Configuration
+  dashboard_port: 8050
+  dashboard_theme: "dark"
+  
+  # Plot Styles
+  color_scheme: "viridis"
+  figure_size: [12, 8]
+  
+  # Real-Time Plots
+  update_frequency: 10  # Hz
+  history_length: 1000
+  
+  # 3D Visualization
+  enable_3d: true
+  point_size: 2.0
+
+performance:
+  # GPU Optimization
+  mixed_precision: true
+  cudnn_benchmark: true
+  memory_efficient: false
+  
+  # Distributed Training
+  gradient_accumulation: 1
+  gradient_clipping: 1.0
+  
+  # Batch Processing
+  batch_size: 1024
+  num_workers: 4
+  prefetch_factor: 2
+
+ethical_safeguards:
+  # Consciousness Containment
+  max_consciousness_score: 0.8
+  emergency_shutdown_threshold: 0.9
+  
+  # Monitoring
+  continuous_monitoring: true
+  alert_notification: true
+  
+  # Data Privacy
+  anonymize_data: true
+  encrypt_sensitive: true
+  
+  # Research Ethics
+  respect_autonomy: true
+  minimize_harm: true
+  maximize_benefit: true
+
+logging:
+  # Log Levels
+  console_level: "INFO"
+  file_level: "DEBUG"
+  
+  # Log Format
+  log_format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+  date_format: "%Y-%m-%d %H:%M:%S"
+  
+  # Log Rotation
+  max_file_size: 10485760  # 10 MB
+  backup_count: 5
+  
+  # Performance Logging
+  log_performance: true
+  log_memory_usage: true

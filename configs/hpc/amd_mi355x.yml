@@ -1,0 +1,73 @@
+# AMD MI355X Accelerator Configuration
+environment: hpc
+debug: false
+log_level: INFO
+
+# Hardware Configuration
+hardware:
+  device: gpu
+  gpu_type: amd_mi355x
+  num_workers: 32
+  pin_memory: true
+  distributed: true
+  use_rocm: true
+
+# Training Configuration
+training:
+  batch_size: 256
+  learning_rate: 0.0001
+  epochs: 150
+  checkpoint_interval: 15
+  save_best_only: true
+  distributed_backend: gloo
+
+# Model Configuration
+model:
+  hidden_size: 768
+  num_layers: 6
+  dropout: 0.15
+
+# Quantum Configuration
+quantum:
+  backend: pennylane
+  shots: 8192
+  noise_model: realistic
+  use_amd_quantum: true
+
+# Evaluation Configuration
+evaluation:
+  metrics:
+    - accuracy
+    - consciousness_level
+    - quantum_coherence
+    - ethical_score
+    - rocm_optimization_metrics
+  save_predictions: true
+
+# Data Configuration
+data:
+  data_dir: /data/consciousnessx/raw
+  processed_dir: /data/consciousnessx/processed
+  num_workers: 32
+
+# Logging Configuration
+logging:
+  log_dir: /data/consciousnessx/logs
+  tensorboard: true
+  wandb: true
+
+# Visualization Configuration
+visualization:
+  save_plots: false
+  plot_dir: /data/consciousnessx/plots
+  interactive: false
+
+# AMD-Specific Configuration
+amd:
+  use_miopen: true
+  use_rccl: true
+  hipblas_workspace_size: 64
+  enable_tensorcores: true
+  environment_vars:
+    HIP_VISIBLE_DEVICES: "0,1,2,3,4,5,6,7"
+    MIOPEN_USER_DB_PATH: "/tmp/miopen_cache"

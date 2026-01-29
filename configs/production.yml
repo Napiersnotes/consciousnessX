@@ -1,0 +1,63 @@
+# Production Configuration
+environment: production
+debug: false
+log_level: INFO
+
+# Hardware Configuration
+hardware:
+  device: gpu
+  num_workers: 8
+  pin_memory: true
+
+# Training Configuration
+training:
+  batch_size: 128
+  learning_rate: 0.0001
+  epochs: 100
+  checkpoint_interval: 10
+  save_best_only: true
+
+# Model Configuration
+model:
+  hidden_size: 512
+  num_layers: 5
+  dropout: 0.2
+
+# Quantum Configuration
+quantum:
+  backend: qiskit
+  shots: 8192
+  noise_model: realistic
+
+# Evaluation Configuration
+evaluation:
+  metrics:
+    - accuracy
+    - consciousness_level
+    - quantum_coherence
+    - ethical_score
+  save_predictions: true
+
+# Data Configuration
+data:
+  data_dir: data/raw
+  processed_dir: data/processed
+  num_workers: 8
+
+# Logging Configuration
+logging:
+  log_dir: data/logs
+  tensorboard: true
+  wandb: true
+
+# Visualization Configuration
+visualization:
+  save_plots: false
+  plot_dir: data/plots
+  interactive: false
+
+# API Configuration
+api:
+  host: 0.0.0.0
+  port: 8000
+  workers: 4

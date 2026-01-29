@@ -1,0 +1,55 @@
+# Testing Configuration
+environment: testing
+debug: true
+log_level: DEBUG
+
+# Hardware Configuration
+hardware:
+  device: cpu
+  num_workers: 1
+  pin_memory: false
+
+# Training Configuration
+training:
+  batch_size: 8
+  learning_rate: 0.01
+  epochs: 2
+  checkpoint_interval: 1
+  save_best_only: false
+
+# Model Configuration
+model:
+  hidden_size: 64
+  num_layers: 2
+  dropout: 0.1
+
+# Quantum Configuration
+quantum:
+  backend: qiskit
+  shots: 100
+  noise_model: null
+
+# Evaluation Configuration
+evaluation:
+  metrics:
+    - accuracy
+    - consciousness_level
+  save_predictions: false
+
+# Data Configuration
+data:
+  data_dir: tests/fixtures
+  processed_dir: tests/fixtures/processed
+  num_workers: 1
+
+# Logging Configuration
+logging:
+  log_dir: /tmp/consciousnessx_logs
+  tensorboard: false
+  wandb: false
+
+# Visualization Configuration
+visualization:
+  save_plots: false
+  plot_dir: /tmp/consciousnessx_plots
+  interactive: false
