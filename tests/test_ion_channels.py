@@ -150,7 +150,8 @@ class TestIonChannel(unittest.TestCase):
         self.na_channel.gating_variables['h'] = 0.5
         
         # For Na+ channel: P_open = m³h
-        expected = 0.5**3 * 0.5 = 0.0625
+        expected = 0.5**3 * 0.5
+        assert expected == 0.0625
         
         # Calculate current to trigger open probability calculation
         self.na_channel.calculate_current(-70.0, time_step_ms=0.01)
