@@ -1,6 +1,7 @@
 """
 FastAPI Application Entry Point
 """
+
 import logging
 from fastapi import FastAPI, Depends, HTTPException, Request, status
 from fastapi.middleware.cors import CORSMiddleware
@@ -16,15 +17,14 @@ from .dependencies import get_settings, verify_api_key
 from ..core.agents.base import AgentOrchestrator
 from ..config import settings, Environment
 
-
 # Configure logging
 logging.basicConfig(
     level=settings.LOG_LEVEL,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
     handlers=[
         logging.StreamHandler(),
-        logging.FileHandler('consciousnessx.log'),
-    ]
+        logging.FileHandler("consciousnessx.log"),
+    ],
 )
 logger = logging.getLogger(__name__)
 
@@ -38,16 +38,16 @@ async def lifespan(app: FastAPI):
     # Startup
     logger.info(f"Starting ConsciousnessX v{settings.VERSION}")
     logger.info(f"Environment: {settings.ENVIRONMENT}")
-    
+
     # Initialize agent orchestrator
     app.state.agent_orchestrator = AgentOrchestrator()
     await app.state.agent_orchestrator.initialize()
-    
+
     yield
-    
+
     # Shutdown
     logger.info("Shutting down ConsciousnessX")
-    if hasattr(app.state, 'agent_orchestrator'):
+    if hasattr(app.state, "agent_orchestrator"):
         await app.state.agent_orchestrator.close()
 
 
@@ -114,7 +114,7 @@ async def status_check(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid API key",
         )
-    
+
     return {
         "status": "operational",
         "agents": list(app.state.agent_orchestrator.agents.keys()),
@@ -141,7 +141,7 @@ async def http_exception_handler(request: Request, exc: HTTPException):
 async def generic_exception_handler(request: Request, exc: Exception):
     """Handle generic exceptions"""
     logger.error(f"Unhandled exception: {exc}", exc_info=True)
-    
+
     return JSONResponse(
         status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
         content={

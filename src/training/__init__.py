@@ -13,19 +13,19 @@ from .scheduler import (
     CosineAnnealingLR,
     ReduceLROnPlateau,
     CyclicLR,
-    WarmupScheduler
+    WarmupScheduler,
 )
 
 __all__ = [
-    'ConsciousnessTrainer',
-    'CurriculumScheduler',
-    'CheckpointManager',
-    'ConsciousnessCurriculum',
-    'LRScheduler',
-    'StepLR',
-    'ExponentialLR',
-    'CosineAnnealingLR',
-    'ReduceLROnPlateau',
-    'CyclicLR',
-    'WarmupScheduler'
+    "ConsciousnessTrainer",
+    "CurriculumScheduler",
+    "CheckpointManager",
+    "ConsciousnessCurriculum",
+    "LRScheduler",
+    "StepLR",
+    "ExponentialLR",
+    "CosineAnnealingLR",
+    "ReduceLROnPlateau",
+    "CyclicLR",
+    "WarmupScheduler",
 ]

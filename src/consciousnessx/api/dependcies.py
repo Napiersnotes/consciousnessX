@@ -1,6 +1,7 @@
 """
 Dependency Injection System
 """
+
 import hashlib
 import hmac
 from datetime import datetime, timedelta
@@ -11,7 +12,6 @@ import jwt
 import redis.asyncio as redis
 
 from ..config import settings
-
 
 security = HTTPBearer(auto_error=False)
 
@@ -42,11 +42,11 @@ def verify_api_key(
     """Verify API key from header"""
     if not credentials:
         return False
-    
+
     # In production, validate against database
     # This is a simplified example
     api_key = credentials.credentials
-    
+
     # Check if it's a user token
     if api_key.startswith("user_"):
         # Validate user token
@@ -55,30 +55,28 @@ def verify_api_key(
             parts = api_key.split("_")
             if len(parts) != 3:
                 return False
-            
+
             user_id, timestamp_str, signature = parts
-            
+
             # Check timestamp (valid for 30 days)
             timestamp = datetime.fromtimestamp(int(timestamp_str))
             if datetime.utcnow() - timestamp > timedelta(days=30):
                 return False
-            
+
             # Verify signature
             expected_signature = hmac.new(
-                settings.SECRET_KEY.encode(),
-                f"{user_id}_{timestamp_str}".encode(),
-                hashlib.sha256
+                settings.SECRET_KEY.encode(), f"{user_id}_{timestamp_str}".encode(), hashlib.sha256
             ).hexdigest()[:16]
-            
+
             return hmac.compare_digest(signature, expected_signature)
-            
+
         except:
             return False
-    
+
     # For now, accept any non-empty key in development
     if settings.ENVIRONMENT != "production":
         return bool(api_key)
-    
+
     return False
 
 
@@ -89,21 +87,21 @@ async def rate_limit_check(
     """Check rate limit for API key"""
     # Simplified rate limiting
     # In production, use more sophisticated logic
-    
+
     current_minute = int(datetime.utcnow().timestamp() / 60)
     key = f"ratelimit:{api_key}:{current_minute}"
-    
+
     try:
         current_count = await redis_client.get(key) or 0
         if int(current_count) >= 60:  # 60 requests per minute
             return False
-        
+
         # Increment counter
         await redis_client.incr(key)
         await redis_client.expire(key, 120)  # Expire after 2 minutes
-        
+
         return True
-        
+
     except Exception as e:
         # If Redis fails, allow request (fail open)
         return True
@@ -116,9 +114,9 @@ async def get_current_user(
     """Get current user from JWT token"""
     if not credentials:
         return None
-    
+
     token = credentials.credentials
-    
+
     try:
         # Decode JWT token
         payload = jwt.decode(
@@ -126,14 +124,14 @@ async def get_current_user(
             settings.SECRET_KEY,
             algorithms=[settings.JWT_ALGORITHM],
         )
-        
+
         return {
             "user_id": payload.get("sub"),
             "email": payload.get("email"),
             "roles": payload.get("roles", []),
             "permissions": payload.get("permissions", []),
         }
-        
+
     except jwt.ExpiredSignatureError:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,

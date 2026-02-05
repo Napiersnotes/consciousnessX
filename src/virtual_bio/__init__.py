@@ -12,9 +12,9 @@ from .tubulin_protein_sim import TubulinProteinSim
 from .dna_origami_simulator import DNAOrigamiSimulator
 
 __all__ = [
-    'IonChannelDynamics',
-    'SynapticPlasticity',
-    'TubulinProteinSim',
-    'VirtualNeuronalCulture',
-    'DNAOrigamiSimulator'
+    "IonChannelDynamics",
+    "SynapticPlasticity",
+    "TubulinProteinSim",
+    "VirtualNeuronalCulture",
+    "DNAOrigamiSimulator",
 ]

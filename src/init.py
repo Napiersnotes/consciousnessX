@@ -14,10 +14,10 @@ from src.evaluation.consciousness_assessment import ConsciousnessAssessor
 from src.training.consciousness_curriculum import ConsciousnessCurriculum
 
 __all__ = [
-    'MicrotubuleSimulator',
-    'PenroseCollapse', 
-    'IonChannelDynamics',
-    'launch_dashboard',
-    'ConsciousnessAssessor',
-    'ConsciousnessCurriculum'
+    "MicrotubuleSimulator",
+    "PenroseCollapse",
+    "IonChannelDynamics",
+    "launch_dashboard",
+    "ConsciousnessAssessor",
+    "ConsciousnessCurriculum",
 ]

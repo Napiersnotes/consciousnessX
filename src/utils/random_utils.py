@@ -9,7 +9,6 @@ import numpy as np
 from typing import Optional, Union, List
 from numpy.random import Generator, PCG64
 
-
 # Global random state
 _global_rng: Optional[Generator] = None
 
@@ -17,22 +16,23 @@ _global_rng: Optional[Generator] = None
 def set_seed(seed: int) -> None:
     """
     Set random seed for reproducibility across all libraries.
-    
+
     Args:
         seed: Random seed value
     """
     global _global_rng
-    
+
     # Set seeds for all random libraries
     random.seed(seed)
     np.random.seed(seed)
-    
+
     # Create NumPy Generator with specific algorithm
     _global_rng = np.random.Generator(PCG64(seed))
-    
+
     # Set torch seed if available
     try:
         import torch
+
         torch.manual_seed(seed)
         if torch.cuda.is_available():
             torch.cuda.manual_seed_all(seed)
@@ -43,7 +43,7 @@ def set_seed(seed: int) -> None:
 def get_random_state() -> Generator:
     """
     Get global random state generator.
-    
+
     Returns:
         NumPy random Generator instance
     """
@@ -54,18 +54,16 @@ def get_random_state() -> Generator:
 
 
 def rand_float(
-    low: float = 0.0,
-    high: float = 1.0,
-    size: Optional[Union[int, tuple]] = None
+    low: float = 0.0, high: float = 1.0, size: Optional[Union[int, tuple]] = None
 ) -> Union[float, np.ndarray]:
     """
     Generate random float(s) in range [low, high).
-    
+
     Args:
         low: Lower bound (inclusive)
         high: Upper bound (exclusive)
         size: Output shape (None for scalar)
-        
+
     Returns:
         Random float or array of floats
     """
@@ -74,18 +72,16 @@ def rand_float(
 
 
 def rand_int(
-    low: int = 0,
-    high: Optional[int] = None,
-    size: Optional[Union[int, tuple]] = None
+    low: int = 0, high: Optional[int] = None, size: Optional[Union[int, tuple]] = None
 ) -> Union[int, np.ndarray]:
     """
     Generate random integer(s) in range [low, high).
-    
+
     Args:
         low: Lower bound (inclusive)
         high: Upper bound (exclusive)
         size: Output shape (None for scalar)
-        
+
     Returns:
         Random int or array of ints
     """
@@ -94,18 +90,16 @@ def rand_int(
 
 
 def rand_normal(
-    loc: float = 0.0,
-    scale: float = 1.0,
-    size: Optional[Union[int, tuple]] = None
+    loc: float = 0.0, scale: float = 1.0, size: Optional[Union[int, tuple]] = None
 ) -> Union[float, np.ndarray]:
     """
     Generate random float(s) from normal distribution.
-    
+
     Args:
         loc: Mean of distribution
         scale: Standard deviation
         size: Output shape (None for scalar)
-        
+
     Returns:
         Random float or array from normal distribution
     """
@@ -117,17 +111,17 @@ def rand_choice(
     a: Union[int, List, np.ndarray],
     size: Optional[int] = None,
     replace: bool = True,
-    p: Optional[np.ndarray] = None
+    p: Optional[np.ndarray] = None,
 ) -> Union[int, np.ndarray]:
     """
     Generate random sample(s) from given array.
-    
+
     Args:
         a: If int, random sample from np.arange(a); if array-like, sample from elements
         size: Number of samples
         replace: Whether to sample with replacement
         p: Probabilities associated with each entry
-        
+
     Returns:
         Random sample(s)
     """
@@ -138,10 +132,10 @@ def rand_choice(
 def rand_permutation(n: int) -> np.ndarray:
     """
     Generate random permutation of integers [0, n).
-    
+
     Args:
         n: Number of elements
-        
+
     Returns:
         Random permutation
     """
@@ -152,10 +146,10 @@ def rand_permutation(n: int) -> np.ndarray:
 def rand_shuffle(x: Union[List, np.ndarray]) -> Union[List, np.ndarray]:
     """
     Shuffle array in place.
-    
+
     Args:
         x: Array to shuffle
-        
+
     Returns:
         Shuffled array (same object)
     """
@@ -164,53 +158,49 @@ def rand_shuffle(x: Union[List, np.ndarray]) -> Union[List, np.ndarray]:
     return x
 
 
-def random_split(
-    total: int,
-    ratios: List[float],
-    shuffle: bool = True
-) -> List[np.ndarray]:
+def random_split(total: int, ratios: List[float], shuffle: bool = True) -> List[np.ndarray]:
     """
     Split indices into multiple groups with given ratios.
-    
+
     Args:
         total: Total number of items
         ratios: List of ratios (sum should be 1.0)
         shuffle: Whether to shuffle before splitting
-        
+
     Returns:
         List of index arrays for each split
     """
     indices = np.arange(total)
-    
+
     if shuffle:
         indices = rand_permutation(total)
-    
+
     # Normalize ratios
     ratios = np.array(ratios)
     ratios = ratios / ratios.sum()
-    
+
     splits = []
     start = 0
-    
+
     for ratio in ratios[:-1]:
         end = start + int(total * ratio)
         splits.append(indices[start:end])
         start = end
-    
+
     # Add remaining indices to last split
     splits.append(indices[start:])
-    
+
     return splits
 
 
 def bernoulli(p: float = 0.5, size: Optional[Union[int, tuple]] = None) -> Union[int, np.ndarray]:
     """
     Sample from Bernoulli distribution.
-    
+
     Args:
         p: Probability of success
         size: Output shape (None for scalar)
-        
+
     Returns:
         0 or 1 (or array of 0s and 1s)
     """
@@ -221,11 +211,11 @@ def bernoulli(p: float = 0.5, size: Optional[Union[int, tuple]] = None) -> Union
 def poisson(lam: float = 1.0, size: Optional[Union[int, tuple]] = None) -> Union[int, np.ndarray]:
     """
     Sample from Poisson distribution.
-    
+
     Args:
         lam: Expected number of events
         size: Output shape (None for scalar)
-        
+
     Returns:
         Sample from Poisson distribution
     """
@@ -233,14 +223,16 @@ def poisson(lam: float = 1.0, size: Optional[Union[int, tuple]] = None) -> Union
     return rng.poisson(lam, size=size)
 
 
-def exponential(scale: float = 1.0, size: Optional[Union[int, tuple]] = None) -> Union[float, np.ndarray]:
+def exponential(
+    scale: float = 1.0, size: Optional[Union[int, tuple]] = None
+) -> Union[float, np.ndarray]:
     """
     Sample from exponential distribution.
-    
+
     Args:
         scale: Scale parameter (inverse of rate)
         size: Output shape (None for scalar)
-        
+
     Returns:
         Sample from exponential distribution
     """
@@ -249,18 +241,16 @@ def exponential(scale: float = 1.0, size: Optional[Union[int, tuple]] = None) ->
 
 
 def lognormal(
-    mean: float = 0.0,
-    sigma: float = 1.0,
-    size: Optional[Union[int, tuple]] = None
+    mean: float = 0.0, sigma: float = 1.0, size: Optional[Union[int, tuple]] = None
 ) -> Union[float, np.ndarray]:
     """
     Sample from log-normal distribution.
-    
+
     Args:
         mean: Mean of underlying normal distribution
         sigma: Standard deviation of underlying normal distribution
         size: Output shape (None for scalar)
-        
+
     Returns:
         Sample from log-normal distribution
     """
@@ -271,10 +261,10 @@ def lognormal(
 def random_unit_vector(dim: int) -> np.ndarray:
     """
     Generate random unit vector in n-dimensional space.
-    
+
     Args:
         dim: Dimension of vector
-        
+
     Returns:
         Unit vector of shape (dim,)
     """
@@ -286,21 +276,21 @@ def random_unit_vector(dim: int) -> np.ndarray:
 def random_rotation_matrix(dim: int = 3) -> np.ndarray:
     """
     Generate random rotation matrix using QR decomposition.
-    
+
     Args:
         dim: Dimension of rotation matrix
-        
+
     Returns:
         Orthogonal rotation matrix
     """
     rng = get_random_state()
     A = rng.standard_normal((dim, dim))
     Q, R = np.linalg.qr(A)
-    
+
     # Ensure proper rotation (det = 1)
     if np.linalg.det(Q) < 0:
         Q[:, 0] = -Q[:, 0]
-    
+
     return Q
 
 
@@ -308,27 +298,27 @@ class RandomContext:
     """
     Context manager for temporary random state changes.
     """
-    
+
     def __init__(self, seed: int):
         """
         Initialize random context.
-        
+
         Args:
             seed: Seed to use within context
         """
         self.seed = seed
         self.old_state = None
-    
+
     def __enter__(self):
         """Enter context and set new seed."""
         # Save current state
         rng = get_random_state()
         self.old_state = rng.bit_generator.state
-        
+
         # Set new seed
         set_seed(self.seed)
         return self
-    
+
     def __exit__(self, exc_type, exc_val, exc_tb):
         """Exit context and restore old state."""
         global _global_rng

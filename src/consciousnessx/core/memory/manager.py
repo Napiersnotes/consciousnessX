@@ -1,6 +1,7 @@
 """
 Memory Management System with Vector Storage
 """
+
 import json
 import uuid
 import logging
@@ -26,7 +27,6 @@ from qdrant_client.models import (
 
 from ...config import settings
 
-
 logger = logging.getLogger(__name__)
 Base = declarative_base()
 
@@ -49,7 +49,7 @@ class Memory:
     created_at: datetime = None
     accessed_at: datetime = None
     access_count: int = 0
-    
+
     def __post_init__(self):
         if self.created_at is None:
             self.created_at = datetime.utcnow()
@@ -57,10 +57,10 @@ class Memory:
             self.accessed_at = self.created_at
         if self.metadata is None:
             self.metadata = {}
-    
+
     def to_dict(self) -> Dict[str, Any]:
         return asdict(self)
-    
+
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> "Memory":
         return cls(**data)
@@ -69,7 +69,7 @@ class Memory:
 # SQLAlchemy Models
 class MemoryModel(Base):
     __tablename__ = "memories"
-    
+
     id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
     content = Column(Text, nullable=False)
     memory_type = Column(String(50), nullable=False)
@@ -86,32 +86,32 @@ class MemoryModel(Base):
 
 class MemoryManager:
     """Manages memory storage and retrieval"""
-    
+
     def __init__(self):
         self.redis = None
         self.qdrant = None
         self.db_engine = None
         self.async_session = None
         self._initialized = False
-    
+
     async def initialize(self):
         """Initialize all storage backends"""
         if self._initialized:
             return
-        
+
         # Initialize Redis
         self.redis = await redis.from_url(
             settings.REDIS_URL,
             encoding="utf-8",
             decode_responses=True,
         )
-        
+
         # Initialize Qdrant for vector storage
         self.qdrant = QdrantClient(
             url=settings.QDRANT_URL,
             api_key=settings.QDRANT_API_KEY,
         )
-        
+
         # Ensure collection exists
         try:
             collections = self.qdrant.get_collections()
@@ -125,26 +125,26 @@ class MemoryManager:
                 )
         except Exception as e:
             logger.warning(f"Could not initialize Qdrant: {e}")
-        
+
         # Initialize PostgreSQL
         self.db_engine = create_async_engine(
             str(settings.DATABASE_URL).replace("postgresql://", "postgresql+asyncpg://"),
             echo=False,
         )
-        
+
         self.async_session = sessionmaker(
             self.db_engine,
             class_=AsyncSession,
             expire_on_commit=False,
         )
-        
+
         # Create tables
         async with self.db_engine.begin() as conn:
             await conn.run_sync(Base.metadata.create_all)
-        
+
         self._initialized = True
         logger.info("Memory Manager initialized")
-    
+
     async def store_memory(
         self,
         content: str,
@@ -157,7 +157,7 @@ class MemoryManager:
     ) -> Memory:
         """Store a new memory"""
         await self.initialize()
-        
+
         memory = Memory(
             id=str(uuid.uuid4()),
             content=content,
@@ -166,7 +166,7 @@ class MemoryManager:
             metadata=metadata or {},
             importance=importance,
         )
-        
+
         # Store in PostgreSQL
         async with self.async_session() as session:
             db_memory = MemoryModel(
@@ -181,7 +181,7 @@ class MemoryManager:
             )
             session.add(db_memory)
             await session.commit()
-        
+
         # Cache in Redis
         cache_key = f"memory:{memory.id}"
         await self.redis.setex(
@@ -189,7 +189,7 @@ class MemoryManager:
             timedelta(hours=24),
             json.dumps(memory.to_dict()),
         )
-        
+
         # Store embedding in Qdrant if available
         if embedding and self.qdrant:
             try:
@@ -202,7 +202,7 @@ class MemoryManager:
                         "importance": importance,
                         "user_id": user_id,
                         "created_at": memory.created_at.isoformat(),
-                    }
+                    },
                 )
                 self.qdrant.upsert(
                     collection_name="memories",
@@ -210,10 +210,10 @@ class MemoryManager:
                 )
             except Exception as e:
                 logger.error(f"Failed to store in Qdrant: {e}")
-        
+
         logger.info(f"Stored memory: {memory.id}")
         return memory
-    
+
     async def retrieve_memory(
         self,
         memory_id: str,
@@ -221,19 +221,19 @@ class MemoryManager:
     ) -> Optional[Memory]:
         """Retrieve a memory by ID"""
         await self.initialize()
-        
+
         # Try cache first
         cache_key = f"memory:{memory_id}"
         cached = await self.redis.get(cache_key)
         if cached:
             data = json.loads(cached)
             memory = Memory.from_dict(data)
-            
+
             if update_access:
                 await self.update_access(memory_id)
-            
+
             return memory
-        
+
         # Fallback to database
         async with self.async_session() as session:
             result = await session.get(MemoryModel, memory_id)
@@ -249,21 +249,21 @@ class MemoryManager:
                     accessed_at=result.accessed_at,
                     access_count=result.access_count,
                 )
-                
+
                 # Cache for future
                 await self.redis.setex(
                     cache_key,
                     timedelta(hours=24),
                     json.dumps(memory.to_dict()),
                 )
-                
+
                 if update_access:
                     await self.update_access(memory_id)
-                
+
                 return memory
-        
+
         return None
-    
+
     async def search_memories(
         self,
         query: str,
@@ -275,10 +275,10 @@ class MemoryManager:
     ) -> List[Tuple[Memory, float]]:
         """Search memories by semantic similarity"""
         await self.initialize()
-        
+
         if not self.qdrant:
             return await self.keyword_search(query, limit=limit)
-        
+
         # Build filter
         filters = []
         if memory_type:
@@ -295,9 +295,9 @@ class MemoryManager:
                     match=MatchValue(value=user_id),
                 )
             )
-        
+
         filter_obj = Filter(must=filters) if filters else None
-        
+
         # Search in Qdrant
         try:
             search_result = self.qdrant.search(
@@ -307,20 +307,20 @@ class MemoryManager:
                 limit=limit,
                 score_threshold=threshold,
             )
-            
+
             # Retrieve full memories
             results = []
             for hit in search_result:
                 memory = await self.retrieve_memory(hit.id, update_access=False)
                 if memory:
                     results.append((memory, hit.score))
-            
+
             return results
-            
+
         except Exception as e:
             logger.error(f"Vector search failed: {e}")
             return await self.keyword_search(query, limit=limit)
-    
+
     async def keyword_search(
         self,
         query: str,
@@ -330,17 +330,17 @@ class MemoryManager:
     ) -> List[Tuple[Memory, float]]:
         """Fallback keyword search"""
         await self.initialize()
-        
+
         async with self.async_session() as session:
             # Simple keyword matching
             # In production, use full-text search
             query_terms = query.lower().split()
-            
+
             # This is simplified - use PostgreSQL full-text search in production
             memories = []
-            
+
             return memories
-    
+
     async def update_access(self, memory_id: str):
         """Update access time and count"""
         async with self.async_session() as session:
@@ -349,7 +349,7 @@ class MemoryManager:
                 memory.accessed_at = datetime.utcnow()
                 memory.access_count += 1
                 await session.commit()
-                
+
                 # Update cache
                 cache_key = f"memory:{memory_id}"
                 cached = await self.redis.get(cache_key)
@@ -362,7 +362,7 @@ class MemoryManager:
                         timedelta(hours=24),
                         json.dumps(data),
                     )
-    
+
     async def get_conversation_history(
         self,
         session_id: str,
@@ -371,12 +371,12 @@ class MemoryManager:
     ) -> List[Memory]:
         """Get conversation history for a session"""
         await self.initialize()
-        
+
         cache_key = f"conversation:{session_id}:{limit}:{offset}"
         cached = await self.redis.get(cache_key)
         if cached:
             return [Memory.from_dict(data) for data in json.loads(cached)]
-        
+
         async with self.async_session() as session:
             # Simplified query - use proper pagination in production
             results = await session.execute(
@@ -387,9 +387,9 @@ class MemoryManager:
                 ORDER BY created_at DESC
                 LIMIT :limit OFFSET :offset
                 """,
-                {"session_id": session_id, "limit": limit, "offset": offset}
+                {"session_id": session_id, "limit": limit, "offset": offset},
             )
-            
+
             memories = []
             for row in results:
                 memory = Memory(
@@ -404,22 +404,22 @@ class MemoryManager:
                     access_count=row.access_count,
                 )
                 memories.append(memory)
-            
+
             # Cache results
             await self.redis.setex(
                 cache_key,
                 timedelta(minutes=5),
                 json.dumps([m.to_dict() for m in memories]),
             )
-            
+
             return memories
-    
+
     async def cleanup_old_memories(self, days_old: int = 30):
         """Clean up old memories (archival)"""
         await self.initialize()
-        
+
         cutoff_date = datetime.utcnow() - timedelta(days=days_old)
-        
+
         async with self.async_session() as session:
             await session.execute(
                 """
@@ -428,12 +428,12 @@ class MemoryManager:
                 WHERE created_at < :cutoff_date 
                 AND is_archived = FALSE
                 """,
-                {"cutoff_date": cutoff_date}
+                {"cutoff_date": cutoff_date},
             )
             await session.commit()
-        
+
         logger.info(f"Cleaned up memories older than {days_old} days")
-    
+
     async def close(self):
         """Cleanup connections"""
         if self.redis:

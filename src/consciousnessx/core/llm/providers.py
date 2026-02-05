@@ -1,6 +1,7 @@
 """
 LLM Provider Factory and Implementations
 """
+
 import asyncio
 import logging
 from abc import ABC, abstractmethod
@@ -16,7 +17,6 @@ from anthropic import AsyncAnthropic
 
 from ..config import settings, LLMProvider
 
-
 logger = logging.getLogger(__name__)
 
 
@@ -31,17 +31,17 @@ class LLMResponse:
 
 class BaseLLMProvider(ABC):
     """Base class for all LLM providers"""
-    
+
     def __init__(self, config: Dict[str, Any]):
         self.config = config
         self.client = None
         self._initialize_client()
-    
+
     @abstractmethod
     def _initialize_client(self):
         """Initialize the client for the specific provider"""
         pass
-    
+
     @abstractmethod
     async def generate(
         self,
@@ -52,12 +52,12 @@ class BaseLLMProvider(ABC):
     ) -> AsyncGenerator[LLMResponse, None]:
         """Generate a response from the LLM"""
         pass
-    
+
     @abstractmethod
     async def embed(self, texts: List[str]) -> List[List[float]]:
         """Generate embeddings for texts"""
         pass
-    
+
     def calculate_cost(self, usage: Dict[str, int]) -> float:
         """Calculate the cost of the API call"""
         return 0.0  # Default implementation
@@ -68,7 +68,7 @@ class OpenAIProvider(BaseLLMProvider):
         api_key = self.config.get("api_key") or settings.OPENAI_API_KEY
         base_url = self.config.get("base_url")
         self.client = AsyncOpenAI(api_key=api_key, base_url=base_url)
-    
+
     async def generate(
         self,
         messages: List[Dict[str, str]],
@@ -77,7 +77,7 @@ class OpenAIProvider(BaseLLMProvider):
         stream: bool = False,
     ) -> AsyncGenerator[LLMResponse, None]:
         model = self.config.get("model", settings.OPENAI_MODEL)
-        
+
         try:
             response = await self.client.chat.completions.create(
                 model=model,
@@ -86,7 +86,7 @@ class OpenAIProvider(BaseLLMProvider):
                 max_tokens=max_tokens,
                 stream=stream,
             )
-            
+
             if stream:
                 async for chunk in response:
                     if chunk.choices[0].delta.content:
@@ -109,11 +109,11 @@ class OpenAIProvider(BaseLLMProvider):
                     finish_reason=response.choices[0].finish_reason,
                     raw_response=response,
                 )
-                
+
         except Exception as e:
             logger.error(f"OpenAI API error: {str(e)}")
             raise
-    
+
     async def embed(self, texts: List[str]) -> List[List[float]]:
         try:
             response = await self.client.embeddings.create(
@@ -124,26 +124,23 @@ class OpenAIProvider(BaseLLMProvider):
         except Exception as e:
             logger.error(f"OpenAI embedding error: {str(e)}")
             raise
-    
+
     def calculate_cost(self, usage: Dict[str, int]) -> float:
         # GPT-4 Turbo pricing (approx)
         prompt_cost_per_token = 0.01 / 1000  # $0.01 per 1K tokens
         completion_cost_per_token = 0.03 / 1000  # $0.03 per 1K tokens
-        
+
         prompt_tokens = usage.get("prompt_tokens", 0)
         completion_tokens = usage.get("completion_tokens", 0)
-        
-        return (
-            prompt_tokens * prompt_cost_per_token +
-            completion_tokens * completion_cost_per_token
-        )
+
+        return prompt_tokens * prompt_cost_per_token + completion_tokens * completion_cost_per_token
 
 
 class AnthropicProvider(BaseLLMProvider):
     def _initialize_client(self):
         api_key = self.config.get("api_key") or settings.ANTHROPIC_API_KEY
         self.client = AsyncAnthropic(api_key=api_key)
-    
+
     async def generate(
         self,
         messages: List[Dict[str, str]],
@@ -153,20 +150,17 @@ class AnthropicProvider(BaseLLMProvider):
     ) -> AsyncGenerator[LLMResponse, None]:
         model = self.config.get("model", settings.ANTHROPIC_MODEL)
         max_tokens = max_tokens or 4096
-        
+
         # Convert to Anthropic format
         system_prompt = None
         converted_messages = []
-        
+
         for msg in messages:
             if msg["role"] == "system":
                 system_prompt = msg["content"]
             else:
-                converted_messages.append({
-                    "role": msg["role"],
-                    "content": msg["content"]
-                })
-        
+                converted_messages.append({"role": msg["role"], "content": msg["content"]})
+
         try:
             response = await self.client.messages.create(
                 model=model,
@@ -176,7 +170,7 @@ class AnthropicProvider(BaseLLMProvider):
                 max_tokens=max_tokens,
                 stream=stream,
             )
-            
+
             if stream:
                 async for chunk in response:
                     if chunk.type == "content_block_delta":
@@ -189,10 +183,9 @@ class AnthropicProvider(BaseLLMProvider):
                         )
             else:
                 content = "".join(
-                    block.text for block in response.content
-                    if hasattr(block, 'text')
+                    block.text for block in response.content if hasattr(block, "text")
                 )
-                
+
                 yield LLMResponse(
                     content=content,
                     model=model,
@@ -203,28 +196,25 @@ class AnthropicProvider(BaseLLMProvider):
                     finish_reason=response.stop_reason,
                     raw_response=response,
                 )
-                
+
         except Exception as e:
             logger.error(f"Anthropic API error: {str(e)}")
             raise
-    
+
     async def embed(self, texts: List[str]) -> List[List[float]]:
         # Anthropic doesn't have a public embedding API yet
         # Fallback to local embeddings or OpenAI
         raise NotImplementedError("Anthropic embeddings not implemented")
-    
+
     def calculate_cost(self, usage: Dict[str, int]) -> float:
         # Claude 3 Opus pricing (approx)
         input_cost_per_token = 0.015 / 1000  # $15 per 1M tokens
         output_cost_per_token = 0.075 / 1000  # $75 per 1M tokens
-        
+
         input_tokens = usage.get("input_tokens", 0)
         output_tokens = usage.get("output_tokens", 0)
-        
-        return (
-            input_tokens * input_cost_per_token +
-            output_tokens * output_cost_per_token
-        )
+
+        return input_tokens * input_cost_per_token + output_tokens * output_cost_per_token
 
 
 class GoogleProvider(BaseLLMProvider):
@@ -232,7 +222,7 @@ class GoogleProvider(BaseLLMProvider):
         api_key = self.config.get("api_key") or settings.GOOGLE_API_KEY
         genai.configure(api_key=api_key)
         self.model_name = self.config.get("model", settings.GOOGLE_MODEL)
-    
+
     async def generate(
         self,
         messages: List[Dict[str, str]],
@@ -241,27 +231,27 @@ class GoogleProvider(BaseLLMProvider):
         stream: bool = False,
     ) -> AsyncGenerator[LLMResponse, None]:
         model = genai.GenerativeModel(self.model_name)
-        
+
         # Convert to Google format
         formatted_content = []
         for msg in messages:
             formatted_content.append(f"{msg['role']}: {msg['content']}")
-        
+
         prompt = "\n".join(formatted_content)
-        
+
         try:
             generation_config = {
                 "temperature": temperature,
                 "max_output_tokens": max_tokens or 2048,
             }
-            
+
             response = await asyncio.to_thread(
                 model.generate_content,
                 prompt,
                 generation_config=generation_config,
                 stream=stream,
             )
-            
+
             if stream:
                 async for chunk in response:
                     if chunk.text:
@@ -280,11 +270,11 @@ class GoogleProvider(BaseLLMProvider):
                     finish_reason="",
                     raw_response=response,
                 )
-                
+
         except Exception as e:
             logger.error(f"Google API error: {str(e)}")
             raise
-    
+
     async def embed(self, texts: List[str]) -> List[List[float]]:
         try:
             # Using textembedding-gecko model
@@ -305,10 +295,11 @@ class GoogleProvider(BaseLLMProvider):
 class LocalProvider(BaseLLMProvider):
     def _initialize_client(self):
         import httpx
+
         self.base_url = self.config.get("base_url", settings.OLLAMA_BASE_URL)
         self.model = self.config.get("model", settings.OLLAMA_MODEL)
         self.client = httpx.AsyncClient(timeout=30.0)
-    
+
     async def generate(
         self,
         messages: List[Dict[str, str]],
@@ -317,7 +308,7 @@ class LocalProvider(BaseLLMProvider):
         stream: bool = False,
     ) -> AsyncGenerator[LLMResponse, None]:
         url = f"{self.base_url}/api/chat"
-        
+
         payload = {
             "model": self.model,
             "messages": messages,
@@ -327,7 +318,7 @@ class LocalProvider(BaseLLMProvider):
             },
             "stream": stream,
         }
-        
+
         try:
             if stream:
                 async with self.client.stream("POST", url, json=payload) as response:
@@ -349,7 +340,7 @@ class LocalProvider(BaseLLMProvider):
                 response = await self.client.post(url, json=payload)
                 response.raise_for_status()
                 data = response.json()
-                
+
                 yield LLMResponse(
                     content=data["message"]["content"],
                     model=self.model,
@@ -357,21 +348,21 @@ class LocalProvider(BaseLLMProvider):
                     finish_reason=data.get("done_reason", ""),
                     raw_response=data,
                 )
-                
+
         except Exception as e:
             logger.error(f"Local model error: {str(e)}")
             raise
-    
+
     async def embed(self, texts: List[str]) -> List[List[float]]:
         url = f"{self.base_url}/api/embeddings"
-        
+
         embeddings = []
         for text in texts:
             payload = {
                 "model": self.model,
                 "prompt": text,
             }
-            
+
             try:
                 response = await self.client.post(url, json=payload)
                 response.raise_for_status()
@@ -380,20 +371,20 @@ class LocalProvider(BaseLLMProvider):
             except Exception as e:
                 logger.error(f"Local embedding error: {str(e)}")
                 embeddings.append([])
-        
+
         return embeddings
 
 
 class LLMFactory:
     """Factory for creating LLM providers"""
-    
+
     _providers = {
         LLMProvider.OPENAI: OpenAIProvider,
         LLMProvider.ANTHROPIC: AnthropicProvider,
         LLMProvider.GOOGLE: GoogleProvider,
         LLMProvider.LOCAL: LocalProvider,
     }
-    
+
     @classmethod
     def create_provider(
         cls,
@@ -402,13 +393,13 @@ class LLMFactory:
     ) -> BaseLLMProvider:
         """Create an LLM provider instance"""
         provider = provider or settings.DEFAULT_LLM_PROVIDER
-        
+
         if provider not in cls._providers:
             raise ValueError(f"Unsupported provider: {provider}")
-        
+
         provider_config = config or settings.LLM_CONFIG.get(provider, {})
         return cls._providers[provider](provider_config)
-    
+
     @classmethod
     def get_available_providers(cls) -> List[LLMProvider]:
         """Get list of available providers"""
