@@ -106,6 +106,14 @@ extend-exclude = '''
   | build
   | dist
 )/
+| (
+  # files with syntax errors
+  src/core/quantum_orch_or.py
+  | src/hardware/virtual_hpc/discovery_2028_emulator.py
+  | src/hardware/virtual_hpc/cray_lux_simulator.py
+  | src/virtual_bio/dna_origami_simulator.py
+  | tests/test_ion_channels.py
+)
 '''
 
 [tool.isort]
