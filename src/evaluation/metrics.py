@@ -3,7 +3,7 @@ ConsciousnessMetrics module for quantifying consciousness states
 """
 
 import numpy as np
-from typing import Dict, Any, List
+from typing import Dict, Any, List, Optional
 import torch
 
 

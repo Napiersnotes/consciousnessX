@@ -2,6 +2,10 @@
 Visualization and dashboard modules.
 """
 
-from .consciousness_dashboard import launch_dashboard
+from .neural_visualizer import NeuralVisualizer
+from .quantum_visualizer import QuantumVisualizer
 
-__all__ = ['launch_dashboard']
+__all__ = [
+    'NeuralVisualizer',
+    'QuantumVisualizer'
+]

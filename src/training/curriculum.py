@@ -3,7 +3,7 @@ CurriculumScheduler module for progressive training
 """
 
 import numpy as np
-from typing import Dict, Any, Callable
+from typing import Dict, Any, Callable, Optional
 
 
 class CurriculumScheduler:
