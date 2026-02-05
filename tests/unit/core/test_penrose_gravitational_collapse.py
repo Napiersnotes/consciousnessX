@@ -4,7 +4,7 @@ Unit tests for PenroseGravitationalCollapse
 
 import pytest
 import numpy as np
-from src.core.penrose_gravitational_collapse import PenroseGravitationalCollapse
+from src.core.penrose_gravitational_collapse import GravitationalCollapseCalculator
 
 
 class TestPenroseGravitationalCollapse:
@@ -13,7 +13,7 @@ class TestPenroseGravitationalCollapse:
     @pytest.fixture
     def collapse(self):
         """Create a PenroseGravitationalCollapse instance"""
-        return PenroseGravitationalCollapse(mass=1e-26, energy=1e-10)
+        return GravitationalCollapseCalculator(mass=1e-26, energy=1e-10)
 
     def test_initialization(self, collapse):
         """Test collapse model initialization"""

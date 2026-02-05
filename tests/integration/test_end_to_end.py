@@ -6,7 +6,7 @@ import pytest
 import numpy as np
 from src.core.microtubule_simulator import MicrotubuleSimulator
 from src.core.quantum_orch_or import QuantumOrchOR
-from src.virtual_bio.ion_channel_dynamics import IonChannelDynamics
+from src.virtual_bio.ion_channel_dynamics import IonChannel
 from src.virtual_bio.synaptic_plasticity import SynapticPlasticity
 from src.evaluation.consciousness_assessment import ConsciousnessAssessment
 

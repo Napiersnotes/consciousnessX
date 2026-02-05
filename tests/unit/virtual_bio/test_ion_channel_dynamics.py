@@ -4,7 +4,7 @@ Unit tests for IonChannelDynamics
 
 import pytest
 import numpy as np
-from src.virtual_bio.ion_channel_dynamics import IonChannelDynamics
+from src.virtual_bio.ion_channel_dynamics import IonChannel
 
 
 class TestIonChannelDynamics:
@@ -13,7 +13,7 @@ class TestIonChannelDynamics:
     @pytest.fixture
     def ion_channel(self):
         """Create an IonChannelDynamics instance"""
-        return IonChannelDynamics(num_channels=100, voltage_range=(-80, 40), dt=0.01)
+        return IonChannel(num_channels=100, voltage_range=(-80, 40), dt=0.01)
 
     def test_initialization(self, ion_channel):
         """Test ion channel initialization"""
