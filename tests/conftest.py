@@ -1,6 +1,7 @@
 """
 Pytest configuration and fixtures for consciousnessX tests
 """
+
 import pytest
 import numpy as np
 import torch
@@ -11,11 +12,11 @@ from pathlib import Path
 def sample_microtubule_data():
     """Generate sample microtubule data for testing"""
     return {
-        'positions': np.random.rand(100, 3),
-        'quantum_states': np.random.rand(100, 2) + 1j * np.random.rand(100, 2),
-        'tubulin_states': np.random.randint(0, 2, 100),
-        'coherence_length': 1.5,
-        'temperature': 300.0,
+        "positions": np.random.rand(100, 3),
+        "quantum_states": np.random.rand(100, 2) + 1j * np.random.rand(100, 2),
+        "tubulin_states": np.random.randint(0, 2, 100),
+        "coherence_length": 1.5,
+        "temperature": 300.0,
     }
 
 
@@ -23,10 +24,10 @@ def sample_microtubule_data():
 def sample_ion_channel_data():
     """Generate sample ion channel data for testing"""
     return {
-        'voltage': np.random.randn(100),
-        'current': np.random.randn(100),
-        'gating_variables': np.random.rand(100, 3),
-        'channel_states': np.random.randint(0, 3, 100),
+        "voltage": np.random.randn(100),
+        "current": np.random.randn(100),
+        "gating_variables": np.random.rand(100, 3),
+        "channel_states": np.random.randint(0, 3, 100),
     }
 
 
@@ -42,24 +43,25 @@ def sample_quantum_state():
 def sample_consciousness_metrics():
     """Sample consciousness metrics for testing"""
     return {
-        'phi': 0.75,
-        'quantum_coherence': 0.82,
-        'integrated_information': 0.68,
-        'neural_complexity': 0.71,
+        "phi": 0.75,
+        "quantum_coherence": 0.82,
+        "integrated_information": 0.68,
+        "neural_complexity": 0.71,
     }
 
 
 @pytest.fixture
 def mock_model():
     """Mock model for testing"""
+
     class MockModel(torch.nn.Module):
         def __init__(self):
             super().__init__()
             self.linear = torch.nn.Linear(10, 5)
-        
+
         def forward(self, x):
             return self.linear(x)
-    
+
     return MockModel()
 
 
