@@ -8,7 +8,7 @@ from src.core.microtubule_simulator import MicrotubuleSimulator
 from src.core.quantum_orch_or import QuantumOrchOR
 from src.virtual_bio.ion_channel_dynamics import IonChannel
 from src.virtual_bio.synaptic_plasticity import SynapticPlasticity
-from src.evaluation.consciousness_assessment import ConsciousnessAssessment
+from src.evaluation.consciousness_assessment import ConsciousnessAssessor
 
 
 class TestEndToEnd:
@@ -19,7 +19,7 @@ class TestEndToEnd:
         # Initialize components
         simulator = MicrotubuleSimulator(num_tubulins=100, length=1000.0)
         orch_or = QuantumOrchOR(num_qubits=8, reduction_time=1e-3)
-        assessment = ConsciousnessAssessment()
+        assessment = ConsciousnessAssessor()
 
         # Simulate microtubule dynamics
         simulator.initialize_quantum_state()
@@ -102,7 +102,7 @@ class TestEndToEnd:
         orch_or = QuantumOrchOR(num_qubits=8, reduction_time=1e-3)
         ion_channel = IonChannelDynamics(num_channels=100, dt=0.01)
         plasticity = SynapticPlasticity(num_neurons=100)
-        assessment = ConsciousnessAssessment()
+        assessment = ConsciousnessAssessor()
 
         # Run simulations
         simulator.initialize_quantum_state()
