@@ -4,7 +4,7 @@ Unit tests for MicrotubuleSimulator
 
 import pytest
 import numpy as np
-from src.core.microtubule_simulator import MicrotubuleSimulator
+from src.core.microtubule_simulator import MicrotubuleSimulator, MicrotubuleConfig
 
 
 class TestMicrotubuleSimulator:
@@ -13,14 +13,18 @@ class TestMicrotubuleSimulator:
     @pytest.fixture
     def simulator(self):
         """Create a MicrotubuleSimulator instance"""
-        return MicrotubuleSimulator(num_tubulins=100, length=1000.0)
+        config = MicrotubuleConfig(
+            num_tubulins_per_filament=100,
+            microtubule_length_nm=1000.0
+        )
+        return MicrotubuleSimulator(config)
 
     def test_initialization(self, simulator):
         """Test simulator initialization"""
-        assert simulator.num_tubulins == 100
-        assert simulator.length == 1000.0
-        assert hasattr(simulator, "positions")
-        assert hasattr(simulator, "quantum_states")
+        assert simulator.config.num_tubulins_per_filament == 100
+        assert simulator.config.microtubule_length_nm == 1000.0
+        assert hasattr(simulator, "lattice")
+        assert hasattr(simulator, "coherence_sim")
 
     def test_simulate_quantum_dynamics(self, simulator):
         """Test quantum dynamics simulation"""
