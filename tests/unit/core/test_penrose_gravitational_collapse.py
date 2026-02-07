@@ -14,15 +14,13 @@ class TestPenroseGravitationalCollapse:
     def collapse(self):
         """Create a PenroseGravitationalCollapse instance"""
         params = PenroseParameters(
-            mass_kg=1e-26,
-            energy_joules=1e-10
+            tubulin_mass=1e-26
         )
         return GravitationalCollapseCalculator(params)
 
     def test_initialization(self, collapse):
         """Test collapse model initialization"""
-        assert collapse.params.mass_kg == 1e-26
-        assert collapse.params.energy_joules == 1e-10
+        assert collapse.params.tubulin_mass == 1e-26
         assert hasattr(collapse, "calculate_collapse_time")
 
     def test_compute_reduction_time(self, collapse):
