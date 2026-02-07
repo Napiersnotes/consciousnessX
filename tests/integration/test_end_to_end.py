@@ -4,9 +4,9 @@ End-to-end integration tests for consciousnessX
 
 import pytest
 import numpy as np
-from src.core.microtubule_simulator import MicrotubuleSimulator
+from src.core.microtubule_simulator import MicrotubuleSimulator, MicrotubuleConfig
 from src.core.quantum_orch_or import QuantumOrchOR
-from src.virtual_bio.ion_channel_dynamics import IonChannel
+from src.virtual_bio.ion_channel_dynamics import IonChannel, IonChannelConfig, IonChannelType
 from src.virtual_bio.synaptic_plasticity import SynapticPlasticity
 from src.evaluation.consciousness_assessment import ConsciousnessAssessor
 
@@ -17,8 +17,8 @@ class TestEndToEnd:
     def test_microtubule_to_consciousness_pipeline(self):
         """Test complete pipeline from microtubule simulation to consciousness assessment"""
         # Initialize components
-        simulator = MicrotubuleSimulator(num_tubulins=100, length=1000.0)
-        orch_or = QuantumOrchOR(num_qubits=8, reduction_time=1e-3)
+        simulator = MicrotubuleSimulator(config=MicrotubuleConfig(num_tubulins_per_filament=100, microtubule_length_nm=1000.0))
+        orch_or = QuantumOrchOR(num_tubulins=1000, coherence_time=1e-3, quantum_superposition_levels=8)
         assessment = ConsciousnessAssessor()
 
         # Simulate microtubule dynamics
@@ -48,8 +48,9 @@ class TestEndToEnd:
 
     def test_neural_plasticity_integration(self):
         """Test integration between ion channels and synaptic plasticity"""
-        ion_channel = IonChannelDynamics(num_channels=100, dt=0.01)
-        plasticity = SynapticPlasticity(num_neurons=100)
+        ion_channel = IonChannel(channel_type=IonChannelType.SODIUM, config=IonChannelConfig(time_step_ms=0.01, membrane_area_um2=1000.0), channel_density=100.0)
+        plasticity = SynapticPlasticity()
+        plasticity.initialize(n_neurons=100)
 
         # Simulate action potentials
         result = ion_channel.simulate_action_potential()
@@ -69,12 +70,13 @@ class TestEndToEnd:
     def test_multiscale_simulation(self):
         """Test multiscale simulation across quantum and biological levels"""
         # Quantum level
-        simulator = MicrotubuleSimulator(num_tubulins=100, length=1000.0)
-        orch_or = QuantumOrchOR(num_qubits=8, reduction_time=1e-3)
+        simulator = MicrotubuleSimulator(config=MicrotubuleConfig(num_tubulins_per_filament=100, microtubule_length_nm=1000.0))
+        orch_or = QuantumOrchOR(num_tubulins=1000, coherence_time=1e-3, quantum_superposition_levels=8)
 
         # Biological level
-        ion_channel = IonChannelDynamics(num_channels=100, dt=0.01)
-        plasticity = SynapticPlasticity(num_neurons=100)
+        ion_channel = IonChannel(channel_type=IonChannelType.SODIUM, config=IonChannelConfig(time_step_ms=0.01, membrane_area_um2=1000.0), channel_density=100.0)
+        plasticity = SynapticPlasticity()
+        plasticity.initialize(n_neurons=100)
 
         # Simulate quantum dynamics
         simulator.initialize_quantum_state()
@@ -98,10 +100,11 @@ class TestEndToEnd:
     def test_consciousness_assessment_pipeline(self):
         """Test complete consciousness assessment pipeline"""
         # Setup components
-        simulator = MicrotubuleSimulator(num_tubulins=100, length=1000.0)
-        orch_or = QuantumOrchOR(num_qubits=8, reduction_time=1e-3)
-        ion_channel = IonChannelDynamics(num_channels=100, dt=0.01)
-        plasticity = SynapticPlasticity(num_neurons=100)
+        simulator = MicrotubuleSimulator(config=MicrotubuleConfig(num_tubulins_per_filament=100, microtubule_length_nm=1000.0))
+        orch_or = QuantumOrchOR(num_tubulins=1000, coherence_time=1e-3, quantum_superposition_levels=8)
+        ion_channel = IonChannel(channel_type=IonChannelType.SODIUM, config=IonChannelConfig(time_step_ms=0.01, membrane_area_um2=1000.0), channel_density=100.0)
+        plasticity = SynapticPlasticity()
+        plasticity.initialize(n_neurons=100)
         assessment = ConsciousnessAssessor()
 
         # Run simulations
@@ -138,7 +141,7 @@ class TestEndToEnd:
     def test_state_persistence_and_retrieval(self, temp_dir):
         """Test saving and loading complete system state"""
         # Initialize and run simulation
-        simulator = MicrotubuleSimulator(num_tubulins=100, length=1000.0)
+        simulator = MicrotubuleSimulator(config=MicrotubuleConfig(num_tubulins_per_filament=100, microtubule_length_nm=1000.0))
         simulator.initialize_quantum_state()
         simulator.simulate_quantum_dynamics(dt=0.1, steps=10)
 
@@ -147,7 +150,7 @@ class TestEndToEnd:
         simulator.save_state(str(state_file))
 
         # Load state
-        new_simulator = MicrotubuleSimulator(num_tubulins=100, length=1000.0)
+        new_simulator = MicrotubuleSimulator(config=MicrotubuleConfig(num_tubulins_per_filament=100, microtubule_length_nm=1000.0))
         new_simulator.load_state(str(state_file))
 
         # Verify state preservation

@@ -4,7 +4,7 @@ Unit tests for IonChannelDynamics
 
 import pytest
 import numpy as np
-from src.virtual_bio.ion_channel_dynamics import IonChannel
+from src.virtual_bio.ion_channel_dynamics import IonChannel, IonChannelConfig, IonChannelType
 
 
 class TestIonChannelDynamics:
@@ -13,13 +13,21 @@ class TestIonChannelDynamics:
     @pytest.fixture
     def ion_channel(self):
         """Create an IonChannelDynamics instance"""
-        return IonChannel(num_channels=100, voltage_range=(-80, 40), dt=0.01)
+        config = IonChannelConfig(
+            time_step_ms=0.01,
+            membrane_area_um2=1000.0
+        )
+        return IonChannel(
+            channel_type=IonChannelType.SODIUM,
+            config=config,
+            channel_density=100.0
+        )
 
     def test_initialization(self, ion_channel):
         """Test ion channel initialization"""
-        assert ion_channel.num_channels == 100
-        assert ion_channel.voltage_range == (-80, 40)
-        assert ion_channel.dt == 0.01
+        assert ion_channel.channel_density == 100.0
+        assert ion_channel.config.time_step_ms == 0.01
+        assert ion_channel.config.membrane_area_um2 == 1000.0
 
     def test_simulate_voltage_step(self, ion_channel):
         """Test voltage step simulation"""
