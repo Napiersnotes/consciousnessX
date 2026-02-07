@@ -466,4 +466,9 @@ class DNAOrigamiSimulator:
             distances, indices = kdtree.query(point, k=4)  # Self + 3 neighbors
             for j in indices[1:]:  # Skip self
                 if i < j:  # Avoid duplicate connections
-                    strand_id = f"shell_{int(r
+                    strand_id = f"shell_{int(i)}_{int(j)}_dist_{distances[j]:.2f}"
+                    self.strands.append({
+                        'id': strand_id,
+                        'points': [points_array[i], points_array[j]],
+                        'length': distances[j]
+                    })
