@@ -13,13 +13,17 @@ class TestQuantumOrchOR:
     @pytest.fixture
     def orch_or(self):
         """Create a QuantumOrchOR instance"""
-        return QuantumOrchOR(num_qubits=8, reduction_time=1e-3)
+        return QuantumOrchOR(
+            num_tubulins=1000,
+            coherence_time=1e-3,
+            quantum_superposition_levels=8
+        )
 
     def test_initialization(self, orch_or):
         """Test OrchOR initialization"""
-        assert orch_or.num_qubits == 8
-        assert orch_or.reduction_time == 1e-3
-        assert hasattr(orch_or, "quantum_state")
+        assert orch_or.num_tubulins == 1000
+        assert orch_or.coherence_time == 1e-3
+        assert orch_or.quantum_superposition_levels == 8
 
     def test_initialize_superposition(self, orch_or):
         """Test quantum superposition initialization"""

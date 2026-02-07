@@ -4,7 +4,7 @@ Unit tests for PenroseGravitationalCollapse
 
 import pytest
 import numpy as np
-from src.core.penrose_gravitational_collapse import GravitationalCollapseCalculator
+from src.core.penrose_gravitational_collapse import GravitationalCollapseCalculator, PenroseParameters
 
 
 class TestPenroseGravitationalCollapse:
@@ -13,13 +13,15 @@ class TestPenroseGravitationalCollapse:
     @pytest.fixture
     def collapse(self):
         """Create a PenroseGravitationalCollapse instance"""
-        return GravitationalCollapseCalculator(mass=1e-26, energy=1e-10)
+        params = PenroseParameters(
+            tubulin_mass=1e-26
+        )
+        return GravitationalCollapseCalculator(params)
 
     def test_initialization(self, collapse):
         """Test collapse model initialization"""
-        assert collapse.mass == 1e-26
-        assert collapse.energy == 1e-10
-        assert hasattr(collapse, "reduction_time")
+        assert collapse.params.tubulin_mass == 1e-26
+        assert hasattr(collapse, "calculate_collapse_time")
 
     def test_compute_reduction_time(self, collapse):
         """Test reduction time computation"""

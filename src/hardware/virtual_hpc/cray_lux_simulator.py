@@ -563,4 +563,8 @@ class VirtualCrayLuxAI:
         raise ValueError(f"Node {node_id} not found")
     
     def get_total_performance(self) -> float:
-        """Get total theo
+        """Get total theoretical performance across all compute nodes."""
+        total_flops = 0.0
+        for node in self.compute_nodes:
+            total_flops += node.performance_gflops
+        return total_flops
