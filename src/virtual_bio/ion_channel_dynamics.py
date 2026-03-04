@@ -435,7 +435,7 @@ class IonChannel:
             Dictionary with voltage, current, and gating variables over time
         """
         num_steps = int(duration_ms / self.config.time_step_ms)
-        
+
         voltages = np.linspace(initial_voltage, final_voltage, num_steps)
         currents = []
         gating_hist = {key: [] for key in self.gating_variables.keys()}
