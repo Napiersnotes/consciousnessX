@@ -63,6 +63,12 @@ class MicrotubuleConfig:
         if self.precision not in ["float32", "float64"]:
             raise ValueError(f"Precision must be 'float32' or 'float64', got {self.precision}")
 
+        if self.num_protofilaments <= 0:
+            raise ValueError(f"num_protofilaments must be positive, got {self.num_protofilaments}")
+
+        if self.num_tubulins_per_filament <= 0:
+            raise ValueError(f"num_tubulins_per_filament must be positive, got {self.num_tubulins_per_filament}")
+
         if self.use_gpu and not torch.cuda.is_available():
             warnings.warn("GPU requested but not available. Falling back to CPU.")
             self.use_gpu = False
@@ -99,9 +105,9 @@ class MicrotubuleLattice:
         radius_nm = 12.5  # Microtubule radius
         helix_pitch = 3 * self.config.tubulin_spacing_nm  # 3-start helix
 
-        for pf in range(self.config.num_protofilaments):
-            for pos in range(self.config.num_tubulins_per_filament):
-                idx = pf * self.config.num_tubulins_per_filament + pos
+        for pos in range(self.config.num_tubulins_per_filament):
+            for pf in range(self.config.num_protofilaments):
+                idx = pos * self.config.num_protofilaments + pf
 
                 # Helical coordinates
                 angle = 2 * np.pi * pf / self.config.num_protofilaments
@@ -660,6 +666,131 @@ class MicrotubuleSimulator:
             return "Emergent consciousness"
         else:
             return "Full consciousness"
+
+    def initialize_quantum_state(self):
+        """Initialize quantum states for the microtubule"""
+        # Reset quantum states to superposition
+        self.lattice.quantum_states = np.zeros(self.lattice.num_tubulins, dtype=np.int32)
+        self.current_time = 0.0
+        self.time_history = []
+        self.state_history = []
+        self.metrics_history = []
+
+    @property
+    def tubulin_states(self):
+        """Get current tubulin quantum states"""
+        return self.lattice.quantum_states
+
+    def simulate_quantum_dynamics(self, dt: float, steps: int) -> Dict[str, Any]:
+        """
+        Simulate quantum dynamics over multiple time steps.
+
+        Args:
+            dt: Time step in seconds
+            steps: Number of simulation steps
+
+        Returns:
+            Dictionary with quantum states and coherence over time
+        """
+        quantum_states_history = [self.lattice.quantum_states.copy()]
+        coherence_history = []
+
+        for _ in range(steps):
+            # Update coherence
+            collapse_probs = self.coherence_sim.update_coherence(self.lattice, dt)
+            self._apply_quantum_collapses(collapse_probs)
+
+            # Record state
+            quantum_states_history.append(self.lattice.quantum_states.copy())
+            coherence = self.compute_coherence()
+            coherence_history.append(coherence)
+
+        return {
+            'quantum_states': quantum_states_history,
+            'coherence': coherence_history
+        }
+
+    def compute_coherence(self) -> float:
+        """
+        Compute the current quantum coherence of the microtubule.
+
+        Returns:
+            Coherence value between 0 and 1
+        """
+        # Calculate fraction of tubulins in superposition state
+        superposition_count = np.sum(self.lattice.quantum_states == QuantumState.SUPERPOSITION.value)
+        coherent_count = np.sum(self.lattice.quantum_states == QuantumState.COHERENT.value)
+        total_tubulins = self.lattice.num_tubulins
+
+        coherence = (superposition_count + coherent_count) / total_tubulins
+        return float(coherence)
+
+    def update_microtubule_state(self, temperature: float = 310.0):
+        """
+        Update microtubule state based on temperature and dynamics.
+
+        Args:
+            temperature: Temperature in Kelvin
+        """
+        # Temperature affects decoherence
+        temp_factor = temperature / 310.0  # Normalized to body temperature
+
+        # Update coherence with temperature factor
+        collapse_probs = self.coherence_sim.update_coherence(
+            self.lattice, 
+            self.config.time_step_s * temp_factor
+        )
+
+        # Apply collapses
+        self._apply_quantum_collapses(collapse_probs)
+
+    def compute_orch_or(self) -> float:
+        """
+        Compute the Orchestrated Objective Reduction (Orch-OR) value.
+
+        Returns:
+            Phi value representing integrated information
+        """
+        # Calculate quantum information
+        coherence = self.compute_coherence()
+
+        # Calculate collapse probability
+        collapse_count = np.sum(self.lattice.quantum_states != QuantumState.SUPERPOSITION.value)
+        total_tubulins = self.lattice.num_tubulins
+
+        # Simple integrated information calculation
+        # Based on the fraction of coherent tubulins and their integration
+        phi = coherence * (1 - collapse_count / total_tubulins) * np.log2(total_tubulins + 1)
+
+        return float(phi)
+
+    def save_state(self, filepath: str):
+        """
+        Save the current microtubule state to a file.
+
+        Args:
+            filepath: Path to save the state file
+        """
+        np.savez(
+            filepath,
+            quantum_states=self.lattice.quantum_states,
+            positions=self.lattice.positions,
+            dipole_moments=self.lattice.dipole_moments,
+            current_time=self.current_time
+        )
+
+    def load_state(self, filepath: str):
+        """
+        Load microtubule state from a file.
+
+        Args:
+            filepath: Path to the state file
+        """
+        data = np.load(filepath)
+        self.lattice.quantum_states = data['quantum_states']
+        self.lattice.positions = data['positions']
+        self.lattice.dipole_moments = data['dipole_moments']
+        self.current_time = float(data['current_time'])
 
     def save_results(self, filepath: str):
         """Save simulation results to file"""

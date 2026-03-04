@@ -35,6 +35,7 @@ class QuantumOrchOR(nn.Module):
         self.coherence_time = coherence_time
         self.gravity_strength = gravity_strength
         self.superposition_levels = quantum_superposition_levels
+        self.quantum_superposition_levels = quantum_superposition_levels  # Alias for test compatibility
         self.device = device
         
         # Tubulin Eigenschaften (virtuell)
@@ -485,4 +486,44 @@ class QuantumOrchOR(nn.Module):
                                        time_resolution: float = 1e-4) -> Dict:
 
         """Simulate the emergence of consciousness over time."""
-        pass
+        num_steps = int(duration_seconds / time_resolution)
+        return self.evolve(num_steps=num_steps, time_step=time_resolution)
+
+    def initialize_superposition(self):
+        """Initialize quantum superposition states."""
+        self.init_quantum_states()
+
+    def compute_phi(self) -> float:
+        """Compute the integrated information Phi."""
+        return float(self.calculate_integrated_information().item())
+
+    def simulate_orchestration(self, duration_ms: float = 100.0) -> Dict:
+        """Simulate orchestrated quantum processing."""
+        num_steps = int(duration_ms / 0.1)  # 0.1ms steps
+        return self.evolve(num_steps=num_steps, time_step=1e-4)
+
+    def simulate_reduction(self) -> Dict:
+        """Simulate objective reduction event."""
+        return self.objective_reduction_step()
+
+    def compute_consciousness_moment(self) -> Dict:
+        """Compute a single moment of consciousness."""
+        result = self.objective_reduction_step()
+        return {
+            'phi': result['integrated_information'],
+            'coherence': result['coherence'],
+            'collapsed': result['collapsed'],
+            'num_collapsed': result['num_collapsed']
+        }
+
+    def save_consciousness_moment(self, filepath: str):
+        """Save the current consciousness state."""
+        import pickle
+        state = {
+            'quantum_states': self.quantum_states.cpu().numpy(),
+            'coherence_history': self.coherence_history,
+            'phi_history': self.phi_history,
+            'collapse_history': self.collapse_history
+        }
+        with open(filepath, 'wb') as f:
+            pickle.dump(state, f)

@@ -75,6 +75,89 @@ class GravitationalCollapseCalculator:
 
         logger.info("Initialized GravitationalCollapseCalculator")
 
+    def compute_reduction_time(self, mass: Optional[float] = None, separation: Optional[float] = None) -> float:
+        """
+        Compute the gravitational reduction time.
+
+        Args:
+            mass: Particle mass (kg)
+            separation: Superposition separation (m)
+
+        Returns:
+            Reduction time in seconds
+        """
+        result = self.calculate_collapse_time(
+            model=CollapseModel.PENROSE_ENERGY_DIFFERENCE,
+            mass=mass,
+            separation=separation
+        )
+        return float(result.get('collapse_time', 0.0))
+
+    def simulate_collapse(self, initial_state: np.ndarray) -> np.ndarray:
+        """
+        Simulate gravitational collapse of a quantum state.
+
+        Args:
+            initial_state: Initial quantum state vector
+
+        Returns:
+            Collapsed state (basis state)
+        """
+        # Calculate probabilities from state amplitudes
+        probabilities = np.abs(initial_state) ** 2
+        probabilities = probabilities / np.sum(probabilities)  # Normalize
+
+        # Select basis state based on probabilities
+        chosen_index = np.random.choice(len(initial_state), p=probabilities)
+
+        # Create collapsed state
+        final_state = np.zeros_like(initial_state)
+        final_state[chosen_index] = 1.0
+
+        return final_state
+
+    def compute_gravitational_energy(self, mass: Optional[float] = None, separation: Optional[float] = None) -> float:
+        """
+        Compute gravitational self-energy.
+
+        Args:
+            mass: Particle mass (kg)
+            separation: Superposition separation (m)
+
+        Returns:
+            Gravitational energy in Joules
+        """
+        mass = mass or self.params.tubulin_mass
+        separation = separation or self.params.superposition_separation
+
+        # Gravitational self-energy: E_G = G * m^2 / r
+        energy = self.params.G * (mass ** 2) / separation
+        return float(energy)
+
+    def apply_uncertainty_principle(self, state: np.ndarray) -> np.ndarray:
+        """
+        Apply quantum uncertainty to a state.
+
+        Args:
+            state: Quantum state vector
+
+        Returns:
+            State with uncertainty applied
+        """
+        # Add small random phase and amplitude uncertainty
+        phase_noise = np.random.normal(0, 0.01, len(state))
+        amplitude_noise = np.random.normal(0, 0.001, len(state))
+
+        # Apply noise
+        uncertain_state = state * np.exp(1j * phase_noise) * (1 + amplitude_noise)
+
+        # Renormalize
+        norm = np.linalg.norm(uncertain_state)
+        if norm > 0:
+            uncertain_state = uncertain_state / norm
+
+        return uncertain_state
+
     def calculate_collapse_time(
         self, model: Union[CollapseModel, str] = CollapseModel.PENROSE_SIMPLE, **kwargs
     ) -> Dict[str, float]:

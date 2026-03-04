@@ -401,6 +401,99 @@ class IonChannel:
         self.current_history.clear()
         self.open_probability_history.clear()
 
+    def set_voltage(self, voltage_mV: float):
+        """Set the current voltage for the channel"""
+        self.current_voltage = voltage_mV
+
+    def compute_conductance(self) -> float:
+        """Compute the current conductance of the channel"""
+        self.open_probability = self._calculate_open_probability()
+        return self.total_conductance * self.open_probability
+
+    def compute_current(self) -> float:
+        """Compute the current through the channel at current voltage"""
+        if not hasattr(self, 'current_voltage'):
+            self.current_voltage = -70.0
+        return self.calculate_current(self.current_voltage)
+
+    def update_gating_variables(self):
+        """Update gating variables at current voltage"""
+        if not hasattr(self, 'current_voltage'):
+            self.current_voltage = -70.0
+        self._update_gating_variables(self.current_voltage, None, self.config.time_step_ms)
+
+    def simulate_voltage_step(self, initial_voltage: float, final_voltage: float, duration_ms: float) -> Dict[str, Any]:
+        """
+        Simulate a voltage step protocol
+
+        Args:
+            initial_voltage: Starting voltage in mV
+            final_voltage: Ending voltage in mV
+            duration_ms: Duration of the step in ms
+
+        Returns:
+            Dictionary with voltage, current, and gating variables over time
+        """
+        num_steps = int(duration_ms / self.config.time_step_ms)
+        
+        voltages = np.linspace(initial_voltage, final_voltage, num_steps)
+        currents = []
+        gating_hist = {key: [] for key in self.gating_variables.keys()}
+
+        for v in voltages:
+            current = self.calculate_current(v, time_step_ms=self.config.time_step_ms)
+            currents.append(current)
+            for key, val in self.gating_variables.items():
+                gating_hist[key].append(val)
+
+        return {
+            'voltage': voltages,
+            'current': np.array(currents),
+            'gating_variables': gating_hist
+        }
+
+    def simulate_action_potential(self) -> Dict[str, Any]:
+        """
+        Simulate an action potential response
+
+        Returns:
+            Dictionary with voltage and current traces
+        """
+        # Simple action potential protocol
+        duration_ms = 20.0
+        num_steps = int(duration_ms / self.config.time_step_ms)
+
+        voltages = []
+        currents = []
+
+        # Simulate a typical action potential waveform
+        for i in range(num_steps):
+            t = i * self.config.time_step_ms
+            # Simplified AP waveform
+            if t < 1.0:
+                v = -70.0 + 120.0 * t  # Rising phase
+            elif t < 2.0:
+                v = 50.0 - 70.0 * (t - 1.0)  # Peak and falling
+            elif t < 5.0:
+                v = -20.0 - 10.0 * (t - 2.0)  # Afterhyperpolarization
+            else:
+                v = -70.0 + 10.0 * (t - 5.0) / 15.0  # Recovery
+
+            current = self.calculate_current(v, time_step_ms=self.config.time_step_ms)
+            voltages.append(v)
+            currents.append(current)
+
+        return {
+            'voltage': np.array(voltages),
+            'current': np.array(currents)
+        }
+
+    def reset_channels(self):
+        """Reset all channels to initial state"""
+        self.reset()
+        self.current_voltage = -80.0
+        self.time = 0.0
+
 
 class HodgkinHuxleyNeuron:
     """
@@ -522,3 +615,163 @@ class HodgkinHuxleyNeuron:
         if is_refractory:
             # During refractory period, clamp voltage
             self.voltage_mV = -80.0  # Hyperpolarized
+            dvdt = 0.0
+            spike_detected = False
+        else:
+            # Calculate total ionic current
+            total_ionic_current_pA = 0.0
+            channel_currents = {}
+
+            for channel_type, channel in self.ion_channels.items():
+                current = channel.calculate_current(self.voltage_mV, time_step_ms)
+                total_ionic_current_pA += current
+                channel_currents[channel_type.value] = current
+
+            # Membrane equation: C_m * dV/dt = I_injected - I_ionic
+            # Convert pA to mV/ms: I (pA) * 1e-12 / C (uF) * 1e6 = I (pA) / C (uF) * 1e-6
+            membrane_current = self.current_injection_pA - total_ionic_current_pA
+            dvdt = membrane_current / (self.config.membrane_capacitance_uF_cm2 * 1e-6) * 1e-6
+
+            # Update voltage
+            new_voltage = self.voltage_mV + dvdt * time_step_ms
+            self.voltage_mV = new_voltage
+
+            # Update calcium concentration
+            calcium_influx = channel_currents.get('calcium', 0.0)
+            if calcium_influx > 0:
+                # Calcium enters cell
+                self.intracellular_calcium_mM += calcium_influx * 0.001 / self.config.membrane_area_um2
+
+            # Calcium pump removes calcium
+            self.intracellular_calcium_mM -= self.calcium_pump_rate * time_step_ms
+
+            # Ensure calcium stays non-negative
+            self.intracellular_calcium_mM = max(0.0, self.intracellular_calcium_mM)
+
+            # Detect spikes
+            spike_detected = False
+            if len(self.voltage_history) > 0:
+                # Check for threshold crossing
+                if self.voltage_history[-1] < self.spike_threshold_mV and self.voltage_mV >= self.spike_threshold_mV:
+                    spike_detected = True
+                    self.spike_times.append(current_time)
+                    self.refractory_until_ms = current_time + self.refractory_period_ms
+
+            # Track voltage derivative for adaptive stepping
+            self.voltage_derivative_history.append(abs(dvdt))
+
+        # Update history
+        self.voltage_history.append(self.voltage_mV)
+        self.calcium_history.append(self.intracellular_calcium_mM)
+        self.time_history.append(current_time + time_step_ms)
+
+        # Update adaptive time step
+        self.current_time_step_ms = time_step_ms
+
+        return {
+            'voltage_mV': self.voltage_mV,
+            'calcium_mM': self.intracellular_calcium_mM,
+            'time_ms': current_time + time_step_ms,
+            'dvdt_mV_ms': dvdt,
+            'spike_detected': spike_detected,
+            'time_step_ms': time_step_ms,
+            'is_refractory': is_refractory
+        }
+
+    def _calculate_adaptive_time_step(self) -> float:
+        """
+        Calculate adaptive time step based on voltage dynamics
+
+        Returns:
+            Adaptive time step in milliseconds
+        """
+        if len(self.voltage_derivative_history) == 0:
+            return self.config.time_step_ms
+
+        # Get recent voltage derivatives
+        recent_derivatives = list(self.voltage_derivative_history)
+        avg_derivative = np.mean(recent_derivatives)
+        max_derivative = np.max(recent_derivatives)
+
+        # Scale time step inversely with dynamics
+        if max_derivative < 1.0:
+            # Slow dynamics - use larger time step
+            adaptive_step = min(self.config.max_time_step_ms, self.config.time_step_ms * 2.0)
+        elif max_derivative < 10.0:
+            # Moderate dynamics - use configured time step
+            adaptive_step = self.config.time_step_ms
+        else:
+            # Fast dynamics - use smaller time step
+            adaptive_step = max(self.config.min_time_step_ms, self.config.time_step_ms * 0.5)
+
+        return adaptive_step
+
+    def run_simulation(self, duration_ms: float, current_protocol: Optional[Callable[[float], float]] = None) -> Dict[str, Any]:
+        """
+        Run a complete simulation
+
+        Args:
+            duration_ms: Simulation duration in milliseconds
+            current_protocol: Function that returns current injection at given time
+
+        Returns:
+            Dictionary with simulation results
+        """
+        self.reset()
+
+        num_steps = int(duration_ms / self.config.time_step_ms)
+        current_protocol = current_protocol or (lambda t: 0.0)
+
+        # Storage for results
+        time_array = []
+        voltage_array = []
+        calcium_array = []
+        spike_times = []
+        all_channel_currents = {channel_type.value: [] for channel_type in self.ion_channels.keys()}
+
+        for step in range(num_steps):
+            current_time = step * self.config.time_step_ms
+            current = current_protocol(current_time)
+
+            result = self.simulate_step(current_injection_pA=current)
+
+            time_array.append(result['time_ms'])
+            voltage_array.append(result['voltage_mV'])
+            calcium_array.append(result['calcium_mM'])
+
+            # Record channel currents
+            for channel_type, channel in self.ion_channels.items():
+                all_channel_currents[channel_type.value].append(channel.current)
+
+        spike_times = self.spike_times.copy()
+
+        return {
+            'time_ms': np.array(time_array),
+            'voltage_mV': np.array(voltage_array),
+            'calcium_mM': np.array(calcium_array),
+            'spike_times_ms': np.array(spike_times),
+            'channel_currents': all_channel_currents,
+            'num_steps': num_steps,
+            'config': self.config
+        }
+
+    def reset(self):
+        """Reset neuron to initial state"""
+        self.voltage_mV = -70.0
+        self.current_injection_pA = 0.0
+        self.intracellular_calcium_mM = self.config.intracellular_calcium_mM
+        self.refractory_until_ms = 0.0
+
+        # Clear history
+        self.voltage_history = []
+        self.calcium_history = []
+        self.time_history = []
+        self.spike_times = []
+
+        # Reset adaptive time stepping
+        self.current_time_step_ms = self.config.time_step_ms
+        self.voltage_derivative_history.clear()
+
+        # Reset all ion channels
+        for channel in self.ion_channels.values():
+            channel.reset()

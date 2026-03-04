@@ -239,3 +239,130 @@ class SynapticPlasticity:
             avg_clustering = 0.0
 
         return float(avg_clustering)
+
+    def apply_stdp(self, pre_times: np.ndarray, post_times: np.ndarray):
+        """
+        Apply Spike-Timing-Dependent Plasticity based on spike times.
+
+        Args:
+            pre_times: Presynaptic spike times in ms
+            post_times: Postsynaptic spike times in ms
+        """
+        if self.synaptic_weights is None:
+            return
+
+        # STDP learning window
+        tau_plus = self.config["stdp_tau_plus"]
+        tau_minus = self.config["stdp_tau_minus"]
+        A_plus = self.config["stdp_a_plus"]
+        A_minus = self.config["stdp_a_minus"]
+
+        # Calculate time differences
+        for pre_t in pre_times:
+            for post_t in post_times:
+                dt = post_t - pre_t  # Post - Pre timing
+
+                if dt > 0:  # Post after pre: LTP
+                    # Causal timing: pre before post strengthens connection
+                    dw = A_plus * np.exp(-dt / tau_plus)
+                    self.synaptic_weights += dw * self.config["stdp_learning_rate"]
+                elif dt < 0:  # Pre after post: LTD
+                    # Anti-causal timing: post before pre weakens connection
+                    dw = A_minus * np.exp(dt / tau_minus)
+                    self.synaptic_weights -= dw * self.config["stdp_learning_rate"]
+
+        # Clip weights to valid range
+        self.synaptic_weights = np.clip(self.synaptic_weights, -1.0, 1.0)
+
+    def apply_anti_hebbian(self, pre_activity: np.ndarray, post_activity: np.ndarray):
+        """
+        Apply anti-Hebbian learning rule.
+
+        Args:
+            pre_activity: Presynaptic neuron activity
+            post_activity: Postsynaptic neuron activity
+        """
+        if self.synaptic_weights is None:
+            n = len(pre_activity)
+            self.initialize(n)
+
+        # Anti-Hebbian rule: Δw = -η * pre * post (opposite of Hebbian)
+        dw = -self.config["stdp_learning_rate"] * np.outer(post_activity, pre_activity)
+
+        # Update weights
+        self.synaptic_weights += dw
+
+        # Normalize
+        self.normalize_weights()
+
+    def simulate_long_term_potentiation(self, stimulus_strength: float, duration: int):
+        """
+        Simulate Long-Term Potentiation (LTP).
+
+        Args:
+            stimulus_strength: Strength of the stimulating input (0-1)
+            duration: Duration of stimulation in time steps
+        """
+        if self.synaptic_weights is None:
+            return
+
+        # LTP strengthens synaptic connections
+        # Apply repeated high-frequency stimulation
+        for _ in range(duration):
+            # Simulate high-frequency burst
+            pre_activity = np.random.rand(self.n_neurons) * stimulus_strength
+            post_activity = np.random.rand(self.n_neurons) * stimulus_strength
+
+            # LTP: strengthen active synapses
+            potentiation = self.config["stdp_learning_rate"] * np.outer(post_activity, pre_activity)
+            self.synaptic_weights += potentiation
+
+        # Clip weights
+        self.synaptic_weights = np.clip(self.synaptic_weights, -1.0, 1.0)
+
+    def simulate_long_term_depression(self, stimulus_strength: float, duration: int):
+        """
+        Simulate Long-Term Depression (LTD).
+
+        Args:
+            stimulus_strength: Strength of the stimulating input (0-1)
+            duration: Duration of stimulation in time steps
+        """
+        if self.synaptic_weights is None:
+            return
+
+        # LTD weakens synaptic connections
+        # Apply low-frequency stimulation
+        for _ in range(duration):
+            # Simulate low-frequency stimulation
+            pre_activity = np.random.rand(self.n_neurons) * stimulus_strength * 0.5
+            post_activity = np.random.rand(self.n_neurons) * stimulus_strength * 0.5
+
+            # LTD: weaken synapses with specific timing
+            depression = -self.config["stdp_learning_rate"] * 0.5 * np.outer(post_activity, pre_activity)
+            self.synaptic_weights += depression
+
+        # Clip weights
+        self.synaptic_weights = np.clip(self.synaptic_weights, -1.0, 1.0)
+
+    def save_weights(self, filepath: str):
+        """
+        Save synaptic weights to file.
+
+        Args:
+            filepath: Path to save weights file
+        """
+        if self.synaptic_weights is not None:
+            np.save(filepath, self.synaptic_weights)
+            logger.info(f"Saved synaptic weights to {filepath}")
+
+    def load_weights(self, filepath: str):
+        """
+        Load synaptic weights from file.
+
+        Args:
+            filepath: Path to weights file
+        """
+        self.synaptic_weights = np.load(filepath)
+        self.n_neurons = self.synaptic_weights.shape[0]
+        logger.info(f"Loaded synaptic weights from {filepath}")
